@@ -28,14 +28,31 @@ sub client_register($ $ $) {
 
     for my $cl (values %clients) {
         if ($cl->{handle} eq $handle) {
-            $cl->{name} = $line;
-            last;
+		if( &isHere ( \%clients , $line )){
+
+			$handle->push_write("Username already taken$eol" . " Choose anothe one: ");
+			$handle->push_read( line => sub { client_register( $_[0] , $_[1] , $_[2] )} ) ;	
+		}
+		else{
+			$cl->{name} = $line;
+    			$handle->push_write("Registered!$eol" . "Another feature coming soon.. ");
+		}
+		last;
         }
     }
 
-    $handle->push_write("Registered!$eol");
-    $handle->push_write("Please send sth$eol");
-    $handle->push_read(line => sub { client_play($_[0], $_[1], $_[2]); });
+}
+
+sub isHere ( $ $ ) { 
+	my ($hashRef , $name ) = @_;
+
+	for my $value ( values %$hashRef ) {
+		if ( defined($value->{name}) && $value->{name} eq $name) {
+			return 1;
+		}
+	}
+	
+	return 0;
 }
 
 sub client_play($ $ $) {
@@ -58,7 +75,7 @@ MAIN:
 
     my $clientId = 0;
    
-    tcp_server "127.0.0.1", 5005, sub {
+    tcp_server "127.0.0.1", 3082, sub {
         my ($fh, $host, $port) = @_;
 
         say "A connection from $host:$port";
